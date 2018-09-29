@@ -1,0 +1,18 @@
+---
+title: "Homework 2"
+author: "Jyoti Ankam"
+date: "September 28, 2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(tidyverse)
+```
