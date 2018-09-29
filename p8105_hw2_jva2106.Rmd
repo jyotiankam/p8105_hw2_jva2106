@@ -9,10 +9,64 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 ```{r}
+
 library(tidyverse)
+
 ```
+
+
+```{r}
+
+nyc_transit = read_csv(file = "./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>% 
+  janitor::clean_names() %>% 
+  select(line:entry, vending, ada) %>% 
+  mutate(entry = recode(entry, "YES" = TRUE, "NO" = FALSE))
+
+```
+
+```{r}
+
+skimr::skim(nyc_transit)
+
+```
+
+```{r}
+
+count(distinct(nyc_transit, line, station_name))
+
+ada_compliant = distinct(nyc_transit, line, station_name, ada)
+sum(ada_compliant$ada)
+
+```
+
+
+```{r}
+
+prop = mutate(nyc_transit, vending = recode(vending, "YES" = TRUE, "NO" = FALSE)) %>%
+  mutate(prop1 = !(entry == vending))
+
+sum(prop$prop1)/nrow(prop)
+  
+```
+
+
+```{r}
+
+reformat_df = gather(prop, key = route_num, value = train, route1:route11)
+
+distinct_train = distinct(reformat_df, line, station_name, train)
+
+A_train = mutate(distinct_train, train_logic = train == "A")
+
+count(A_train, train_logic)
+
+nyc_traintransit = select(reformat_df, line, station_name, ada, train) 
+nyc_distinct_trains = distinct(nyc_traintransit, line, station_name, ada, train)
+nyc_distinct_trains_1 = mutate(nyc_distinct_trains, train_a = train == "A", ada_logical = ((ada == TRUE) & (train_a == TRUE)))
+
+count(nyc_distinct_trains_1, ada_logical)
+
+```
+
+
