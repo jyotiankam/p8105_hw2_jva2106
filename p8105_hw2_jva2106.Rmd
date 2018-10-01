@@ -5,17 +5,13 @@ date: "September 28, 2018"
 output: github_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ```{r}
 
 library(tidyverse)
 
 ```
 
-
+Problem 1:
 ```{r}
 
 nyc_transit = read_csv(file = "./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>% 
@@ -25,48 +21,42 @@ nyc_transit = read_csv(file = "./data/NYC_Transit_Subway_Entrance_And_Exit_Data.
 
 ```
 
-```{r}
-
-skimr::skim(nyc_transit)
-
-```
 
 ```{r}
-
-count(distinct(nyc_transit, line, station_name))
 
 ada_compliant = distinct(nyc_transit, line, station_name, ada)
+
 sum(ada_compliant$ada)
 
+nrow(ada_compliant)
 ```
 
 
 ```{r}
 
-prop = mutate(nyc_transit, vending = recode(vending, "YES" = TRUE, "NO" = FALSE)) %>%
-  mutate(prop1 = !(entry == vending))
+ent_vend_df = mutate(nyc_transit, vending = recode(vending, "YES" = TRUE, "NO" = FALSE),
+                  entry_vend = !(entry == vending))
 
-sum(prop$prop1)/nrow(prop)
+prop_vending = sum(ent_vend_df$entry_vend)/nrow(ent_vend_df)
   
 ```
 
 
 ```{r}
 
-reformat_df = gather(prop, key = route_num, value = train, route1:route11)
-
-distinct_train = distinct(reformat_df, line, station_name, train)
-
-A_train = mutate(distinct_train, train_logic = train == "A")
-
-count(A_train, train_logic)
-
-nyc_traintransit = select(reformat_df, line, station_name, ada, train) 
-nyc_distinct_trains = distinct(nyc_traintransit, line, station_name, ada, train)
-nyc_distinct_trains_1 = mutate(nyc_distinct_trains, train_a = train == "A", ada_logical = ((ada == TRUE) & (train_a == TRUE)))
-
-count(nyc_distinct_trains_1, ada_logical)
+reformat_df = gather(ent_vend_df, key = route_num, value = train, route1:route11) %>% 
+  separate(route_num, into = c("delete", "route"), sep = 5) %>% 
+  select(everything(), -delete) %>% 
+  distinct(line, station_name, train, ada) %>% 
+  filter(train == "A")
 
 ```
 
+There are `r nrow(reformat_df)` distinct stations that serve the A train. From the distinct stations that serve the A train, `r sum(reformat_df$ada)` are ADA compliant.
+
+Problem 2:
+
+```{r}
+trash_wheel_df = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "Mr. Trash Wheel", cellranger::cell_cols(1:13))
+```
 
