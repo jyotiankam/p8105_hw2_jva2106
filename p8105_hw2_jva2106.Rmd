@@ -57,6 +57,54 @@ There are `r nrow(reformat_df)` distinct stations that serve the A train. From t
 Problem 2:
 
 ```{r}
-trash_wheel_df = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "Mr. Trash Wheel", cellranger::cell_cols(1:13))
+
+trash_wheel_df = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "Mr. Trash Wheel", cellranger::cell_cols(1:13)) %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(dumpster), dumpster != 23220) %>% 
+  mutate(sports_balls = as.integer(round(sports_balls, 0)))
+
+```
+
+Reading and cleaning precipitation data 2016 and 2017:
+
+```{r}
+
+precip_2016 = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "2016 Precipitation", range = "A2:B14") %>% 
+  janitor::clean_names() %>% 
+  mutate(year = 2016) 
+
+
+precip_2017 = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "2017 Precipitation", range = "A2:B14") %>% 
+  janitor::clean_names() %>% 
+  mutate(year = 2017) %>% 
+  filter(!is.na(total))
+
+```
+
+
+Combining the datasets for 2016 and 2017:
+
+```{r}
+
+precip_16_17_df = bind_rows(precip_2016, precip_2017)
+  month.name[precip_16_17_df$month]
+
+month_df = pull(precip_16_17_df, month) %>% 
+  tibble(month_name = month.name[month_df])
+
+
+```
+
+Problem 3: Installing the package
+
+```{r}
+
+# install.packages("devtools")
+devtools::install_github("p8105/p8105.datasets")
+
+library(p8105.datasets)
+
+data(brfss_smart2010)
+
 ```
 
