@@ -58,10 +58,10 @@ Problem 2:
 
 ```{r}
 
-trash_wheel_df = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "Mr. Trash Wheel", cellranger::cell_cols(1:13)) %>% 
+trash_wheel_df = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "Mr. Trash Wheel", range = "A2:N258") %>% 
   janitor::clean_names() %>% 
   filter(!is.na(dumpster), dumpster != 23220) %>% 
-  mutate(sports_balls = as.integer(round(sports_balls, 0)))
+  mutate(sports_balls = as.integer(sports_balls))
 
 ```
 
@@ -81,19 +81,37 @@ precip_2017 = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.
 
 ```
 
-
 Combining the datasets for 2016 and 2017:
 
 ```{r}
 
 precip_16_17_df = bind_rows(precip_2016, precip_2017)
-  month.name[precip_16_17_df$month]
 
-month_df = pull(precip_16_17_df, month) %>% 
-  tibble(month_name = month.name[month_df])
+month_vec = month.name[c(pull(precip_16_17_df, month))]
 
+month_name_df = tibble::as.tibble(month_vec)
+
+precip_total = bind_cols(precip_16_17_df, month_name_df) %>% 
+  select(-month) %>% 
+  select(year, month = value, total)
 
 ```
+
+The median number of sportsballs in  a dumpster in 2016:
+
+```{r}
+median_balls_16 = trash_wheel_df %>% 
+  filter(year == 2016)
+
+```
+
+The trash wheel dataset contains `r nrow(trash_wheel_df)` rows times `r ncol(trash_wheel_df)` columns after tidying/cleaning. It contains a wide range of information about the trashwheel waste collector. There's information about the different types of waste collected like number of sport balls, grocery bags, cigarette butts, chip bags, plastic and glass bottles etc. Information on date is also collected.
+
+
+The precipitation datasets contain information about precipation for the years 2016 and 2017. There are `r nrow(precip_2016)` rows times `r ncol(precip_2016)` columns in the 2016 precipation dataset. In the 2017 dataset, there are `r nrow(precip_2017)` rows times `r ncol(precip_2017)` columns. Both datasets combined contain information on total precipation in each month.
+
+The total precipitation in 2017 is `r sum(precip_2017$total)` and the median number of sports balls is `r median(median_balls_16$sports_balls)`.
+
 
 Problem 3: Installing the package
 
@@ -105,6 +123,63 @@ devtools::install_github("p8105/p8105.datasets")
 library(p8105.datasets)
 
 data(brfss_smart2010)
+```
+
+Tidying and fomratting the data:
+
+```{r}
+brfss_smart_df = brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(topic == "Overall Health") %>% 
+  select(-(class:question), -sample_size, -(confidence_limit_low:geo_location)) %>% 
+  spread(key = response, value = data_value) %>% 
+  janitor::clean_names() %>% 
+  mutate(excellent_verygood = excellent + very_good)
+  
+```
+
+Using this dataset, do or answer the following:
+
+There are `r nrow(distinct(brfss_smart_df, locationabbr))` distinct locations. Yes, all states are represented.
+
+```{r}
+
+observed_most = count(brfss_smart_df, locationabbr) %>% 
+  top_n(1, n)
+
+```
+
+`r pull(observed_most, locationabbr)` is the most observed state with `r pull(observed_most, n)` municipalities/counties.
+
+
+```{r}
+
+data_2002_df = brfss_smart_df %>% 
+  filter(year == 2002)
+
+median(data_2002_df$excellent, na.rm = TRUE)
+
+```
+
+`r median(data_2002_df$excellent, na.rm = TRUE)` is the median of the Excellent response in 2002.
+
+Histogram of Excellent responses in the year 2002:
+
+```{r}
+
+ggplot(data_2002_df, aes(x = excellent)) + 
+  geom_histogram()
+
+```
+
+Scatterplot showing the proportion of “Excellent” response values in New York County and Queens County (both in NY State) in each year from 2002 to 2010:
+
+```{r}
+
+brfss_smart_df %>% 
+  filter(locationdesc %in% c("NY - New York County", "NY - Queens County")) %>% 
+  ggplot(aes(x = year, y = excellent, color = locationdesc)) +
+  geom_point()
 
 ```
 
