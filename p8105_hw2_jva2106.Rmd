@@ -5,11 +5,15 @@ date: "September 28, 2018"
 output: github_document
 ---
 
+Loading the package - tidyverse:
+
 ```{r}
 
 library(tidyverse)
 
 ```
+
+Reading the csv dataset NYC transit:
 
 Problem 1:
 ```{r}
@@ -21,6 +25,10 @@ nyc_transit = read_csv(file = "./data/NYC_Transit_Subway_Entrance_And_Exit_Data.
 
 ```
 
+The NYC transit dataset contains information about NYC Transit trains, stations and routes. Some of the relevant variables included - stations, trains, routes served, vending information and ada compliance information.
+First we imported the data and clean the variables names by replacing spaces with underscores and making them lower case. Then, we selected the variables that were needed for analysis. We also changed the variable 'entry' to the logical type.
+
+We have `r nrow(nyc_transit)` rows times `r ncol(nyc_transit)` columns. The data wasn't tidy at first as some of the data under routes was spread across multiple columns. In addition, data under route numbers was under the route variable (column).
 
 ```{r}
 
@@ -30,6 +38,8 @@ sum(ada_compliant$ada)
 
 nrow(ada_compliant)
 ```
+
+From the code chunk above and also from this inline code, we know that there are `r nrow(ada_compliant)` stations. From these `r nrow(ada_compliant)` stations, total `r sum(ada_compliant$ada)` are ada compliant.
 
 
 ```{r}
@@ -41,12 +51,18 @@ prop_vending = sum(ent_vend_df$entry_vend)/nrow(ent_vend_df)
   
 ```
 
+In this code chunk above, we are identifying the stations with no vending but allow entrance. By using a logical variable, it seems easier to find the sum of logical variables to find the number of TRUEs, such that the logical condition is negated and the FALSES are converted to TRUEs.
+
+We have `r sum(ent_vend_df$entry_vend)/nrow(ent_vend_df)` of entrance/exits with no vending that allow entrance.
+
+
+Reformatting the data to find the total number of stations serving the A train service:
 
 ```{r}
 
 reformat_df = gather(ent_vend_df, key = route_num, value = train, route1:route11) %>% 
   separate(route_num, into = c("delete", "route"), sep = 5) %>% 
-  select(everything(), -delete) %>% 
+  select(-delete) %>% 
   distinct(line, station_name, train, ada) %>% 
   filter(train == "A")
 
@@ -55,6 +71,8 @@ reformat_df = gather(ent_vend_df, key = route_num, value = train, route1:route11
 There are `r nrow(reformat_df)` distinct stations that serve the A train. From the distinct stations that serve the A train, `r sum(reformat_df$ada)` are ADA compliant.
 
 Problem 2:
+
+Reading Mr. Trash Wheel dataset and cleaning it:
 
 ```{r}
 
@@ -65,7 +83,7 @@ trash_wheel_df = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-
 
 ```
 
-Reading and cleaning precipitation data 2016 and 2017:
+Reading and cleaning the precipitation datasets 2016 and 2017:
 
 ```{r}
 
@@ -81,16 +99,19 @@ precip_2017 = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.
 
 ```
 
-Combining the datasets for 2016 and 2017:
+Combining the precipitation datasets of 2016 and 2017:
 
 ```{r}
 
 precip_16_17_df = bind_rows(precip_2016, precip_2017)
 
+## pulling months as a vector from the tibble in order to be able to apply the month.name function
 month_vec = month.name[c(pull(precip_16_17_df, month))]
 
+## coverting the vector into a tibble for binding the columns
 month_name_df = tibble::as.tibble(month_vec)
 
+## binding the columns together and renaming the variables
 precip_total = bind_cols(precip_16_17_df, month_name_df) %>% 
   select(-month) %>% 
   select(year, month = value, total)
@@ -113,7 +134,7 @@ The precipitation datasets contain information about precipation for the years 2
 The total precipitation in 2017 is `r sum(precip_2017$total)` and the median number of sports balls is `r median(median_balls_16$sports_balls)`.
 
 
-Problem 3: Installing the package
+Problem 3: Installing the package:
 
 ```{r}
 
@@ -125,9 +146,11 @@ library(p8105.datasets)
 data(brfss_smart2010)
 ```
 
-Tidying and fomratting the data:
+Tidying and formatting the data: focussing on the “Overall Health” topic and
+excluding variables for class, topic, question, sample size, and everything from lower confidence limit to GeoLocation
 
 ```{r}
+
 brfss_smart_df = brfss_smart2010 %>% 
   janitor::clean_names() %>% 
   filter(topic == "Overall Health") %>% 
@@ -138,7 +161,7 @@ brfss_smart_df = brfss_smart2010 %>%
   
 ```
 
-Using this dataset, do or answer the following:
+Using this dataset, answering the following:
 
 There are `r nrow(distinct(brfss_smart_df, locationabbr))` distinct locations. Yes, all states are represented.
 
@@ -162,6 +185,7 @@ median(data_2002_df$excellent, na.rm = TRUE)
 ```
 
 `r median(data_2002_df$excellent, na.rm = TRUE)` is the median of the Excellent response in 2002.
+
 
 Histogram of Excellent responses in the year 2002:
 
