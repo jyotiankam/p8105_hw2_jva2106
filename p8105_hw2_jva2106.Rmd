@@ -45,7 +45,8 @@ From the code chunk above and also from this inline code, we know that there are
 ```{r}
 
 ent_vend_df = mutate(nyc_transit, vending = recode(vending, "YES" = TRUE, "NO" = FALSE),
-                  entry_vend = !(entry == vending))
+                  entry_vend = !(entry == vending)) %>% 
+              filter(!(vending == TRUE & entry == FALSE))
 
 prop_vending = sum(ent_vend_df$entry_vend)/nrow(ent_vend_df)
   
@@ -78,7 +79,7 @@ Reading Mr. Trash Wheel dataset and cleaning it:
 
 trash_wheel_df = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "Mr. Trash Wheel", range = "A2:N258") %>% 
   janitor::clean_names() %>% 
-  filter(!is.na(dumpster), dumpster != 23220) %>% 
+  filter(!is.na(dumpster)) %>% 
   mutate(sports_balls = as.integer(sports_balls))
 
 ```
